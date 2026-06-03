@@ -233,9 +233,9 @@ export function Awards() {
                     })}
                   >
                     <motion.div
-                      className="p-4 bg-gray-900 text-white rounded-xl"
+                      className="p-4 bg-gray-900 text-white rounded-xl cursor-pointer"
                       whileHover={{ rotate: 360 }}
-                      transition={transition({ duration: 0.5 })}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
                     >
                       <award.icon size={28} />
                     </motion.div>
