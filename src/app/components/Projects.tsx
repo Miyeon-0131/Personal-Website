@@ -25,7 +25,7 @@ const projects = [
   },
   {
     title: "AI-Powered Desmos",
-    description: "An intelligent graphing calculator powered by AI for advanced mathematical visualization. Currently applying to ZhenFund 真格基金.",
+    description: "An intelligent graphing calculator powered by AI for advanced mathematical visualization. Currently applying to ZhenFund.",
     tags: ["AI", "Mathematics", "ZhenFund"],
     link: "https://ai-desmos.figma.site",
     color: "from-emerald-400 to-teal-600",
