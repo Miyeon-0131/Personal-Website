@@ -159,7 +159,7 @@ export function Awards() {
             </div>
             <div>
               <h3 className="text-xl md:text-2xl mb-2">
-                ZhenFund (真格基金) — AI Desmos
+                ZhenFund 真格基金 — AI Desmos
               </h3>
               <p className="text-gray-300 leading-relaxed">
                 <strong className="text-white">AI Desmos</strong> is currently
