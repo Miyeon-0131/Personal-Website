@@ -1,0 +1,21 @@
+---
+description: After code changes, commit and push to GitHub origin/main
+alwaysApply: true
+---
+
+# GitHub sync (Personal Website)
+
+Remote: `https://github.com/Miyeon-0131/Personal-Website.git`, branch `main`.
+
+After completing any task that modifies project files:
+
+1. Run `git status` and `git diff` to review changes.
+2. Stage and commit with a clear, concise message (English is fine).
+3. Push to `origin main` (`git push origin main`).
+4. Briefly tell the user the push succeeded and include the repo URL if relevant.
+
+Do not skip push when there are committed changes to publish.
+
+Git identity: if commit fails due to missing author, set author via environment variables for that command only (do not run `git config --global`).
+
+Never force-push to `main`. Do not commit secrets (`.env`, credentials).
