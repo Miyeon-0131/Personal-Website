@@ -5,17 +5,22 @@ import { AcademicAchievements } from "@/app/components/AcademicAchievements";
 import { Awards } from "@/app/components/Awards";
 import { Projects } from "@/app/components/Projects";
 import { Footer } from "@/app/components/Footer";
+import { LanguageToggle } from "@/app/components/LanguageToggle";
+import { LanguageProvider } from "@/i18n/LanguageContext";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      <Hero />
-      <About />
-      <CodingJourney />
-      <AcademicAchievements />
-      <Awards />
-      <Projects />
-      <Footer />
-    </div>
+    <LanguageProvider>
+      <LanguageToggle />
+      <div className="min-h-screen bg-white text-gray-900">
+        <Hero />
+        <About />
+        <CodingJourney />
+        <AcademicAchievements />
+        <Awards />
+        <Projects />
+        <Footer />
+      </div>
+    </LanguageProvider>
   );
 }

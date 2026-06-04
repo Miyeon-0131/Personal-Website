@@ -1,8 +1,10 @@
 import { motion } from "motion/react";
 import { Mail } from "lucide-react";
 import { useInViewOnScrollDown } from "@/app/components/ui/use-in-view-scroll-down";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export function Footer() {
+  const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
   const { ref, isVisible, transition } = useInViewOnScrollDown({
     margin: "-50px",
@@ -18,7 +20,7 @@ export function Footer() {
             animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={transition({ duration: 0.6 })}
           >
-            Contact with Me
+            {t.footer.contact}
           </motion.h3>
 
           <motion.div
@@ -34,7 +36,7 @@ export function Footer() {
               className="p-4 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors"
               whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.9 }}
-              aria-label="Email"
+              aria-label={t.footer.emailAria}
             >
               <Mail size={28} />
             </motion.a>
@@ -47,7 +49,9 @@ export function Footer() {
           animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
           transition={transition({ duration: 0.6, delay: 0.4 })}
         >
-          <p>© {currentYear} Junyu Ling. All rights reserved.</p>
+          <p>
+            © {currentYear} Junyu Ling. {t.footer.rights}
+          </p>
         </motion.div>
       </div>
     </footer>

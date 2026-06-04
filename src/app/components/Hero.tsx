@@ -8,38 +8,18 @@ import {
   MapPin,
   ChevronRight,
 } from "lucide-react";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-const highlights = [
-  { icon: Sparkles, label: "AI-Native Builder" },
-  { icon: Code2, label: "Full-Stack & Mini Programs" },
-  { icon: Music2, label: "ABRSM Piano Grade 7" },
-];
+const highlightIcons = [Sparkles, Code2, Music2];
 
-const stats = [
-  { value: "9+", label: "Awards" },
-  { value: "8+", label: "Projects" },
-  { value: "17", label: "Years Old" },
-];
+const statValues = ["9+", "8+", "17"];
 
-const quickLinks = [
-  { href: "#about", label: "About" },
-  { href: "#journey", label: "Journey" },
-  { href: "#achievements", label: "Academics" },
-  { href: "#awards", label: "Awards" },
-  { href: "#projects", label: "Projects" },
-];
-
-const marqueeSkills = [
-  "React",
-  "TypeScript",
-  "AI / AIGC",
-  "Mathematical Modeling",
-  "WeChat Mini Programs",
-  "Product Design",
-  "Desmos",
-  "Physics",
-  "Music",
-  "ZhenFund — AI Desmos",
+const quickLinkHrefs = [
+  "#about",
+  "#journey",
+  "#achievements",
+  "#awards",
+  "#projects",
 ];
 
 function FloatingOrb({
@@ -70,6 +50,7 @@ function FloatingOrb({
 }
 
 export function Hero() {
+  const { t } = useLanguage();
   const { ref, isVisible, transition } = useInViewOnScrollDown({
     margin: "-100px",
   });
@@ -79,6 +60,14 @@ export function Hero() {
   };
 
   const nameChars = "Junyu Ling".split("");
+  const statLabels = [t.hero.stats.awards, t.hero.stats.projects, t.hero.stats.age];
+  const navLabels = [
+    t.nav.about,
+    t.nav.journey,
+    t.nav.achievements,
+    t.nav.awards,
+    t.nav.projects,
+  ];
 
   return (
     <section
@@ -126,11 +115,11 @@ export function Hero() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            Open to collaborate
+            {t.hero.collaborate}
           </span>
           <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/90 border border-gray-200 text-sm text-gray-600">
             <MapPin size={14} className="text-gray-400" />
-            Shanghai · Age 17
+            {t.hero.location}
           </span>
         </motion.div>
 
@@ -140,7 +129,7 @@ export function Hero() {
           animate={isVisible ? { opacity: 1 } : {}}
           transition={transition({ delay: 0.2 })}
         >
-          Student · Developer · Musician
+          {t.hero.role}
         </motion.p>
 
         <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-semibold tracking-tight leading-none mb-6">
@@ -163,18 +152,21 @@ export function Hero() {
           animate={isVisible ? { opacity: 1 } : {}}
           transition={transition({ delay: 0.75 })}
         >
-          {highlights.map((item, i) => (
-            <motion.span
-              key={item.label}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-white border border-gray-200 rounded-full text-gray-700 shadow-sm"
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={isVisible ? { opacity: 1, scale: 1 } : {}}
-              transition={transition({ delay: 0.8 + i * 0.06 })}
-            >
-              <item.icon size={14} className="text-gray-500 shrink-0" />
-              {item.label}
-            </motion.span>
-          ))}
+          {t.hero.highlights.map((label, i) => {
+            const Icon = highlightIcons[i];
+            return (
+              <motion.span
+                key={label}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-white border border-gray-200 rounded-full text-gray-700 shadow-sm"
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={isVisible ? { opacity: 1, scale: 1 } : {}}
+                transition={transition({ delay: 0.8 + i * 0.06 })}
+              >
+                <Icon size={14} className="text-gray-500 shrink-0" />
+                {label}
+              </motion.span>
+            );
+          })}
         </motion.div>
 
         <motion.div
@@ -189,7 +181,7 @@ export function Hero() {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
           >
-            View Projects
+            {t.hero.viewProjects}
             <ChevronRight size={18} />
           </motion.a>
           <motion.a
@@ -198,7 +190,7 @@ export function Hero() {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
           >
-            Awards & Honors
+            {t.hero.awardsHonors}
           </motion.a>
         </motion.div>
 
@@ -208,15 +200,15 @@ export function Hero() {
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={transition({ delay: 1.3 })}
         >
-          {stats.map((stat) => (
+          {statLabels.map((label, i) => (
             <div
-              key={stat.label}
+              key={label}
               className="px-5 py-4 rounded-2xl bg-white/80 border border-gray-100 backdrop-blur-sm shadow-sm"
             >
               <p className="text-3xl md:text-4xl font-semibold text-gray-900">
-                {stat.value}
+                {statValues[i]}
               </p>
-              <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+              <p className="text-sm text-gray-500 mt-1">{label}</p>
             </div>
           ))}
         </motion.div>
@@ -226,15 +218,15 @@ export function Hero() {
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={transition({ delay: 1.45 })}
-          aria-label="Page sections"
+          aria-label={t.nav.sections}
         >
-          {quickLinks.map((link) => (
+          {navLabels.map((label, i) => (
             <a
-              key={link.href}
-              href={link.href}
+              key={quickLinkHrefs[i]}
+              href={quickLinkHrefs[i]}
               className="text-sm px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-900 hover:text-white transition-colors"
             >
-              {link.label}
+              {label}
             </a>
           ))}
         </motion.nav>
@@ -252,7 +244,7 @@ export function Hero() {
             animate={{ x: ["0%", "-50%"] }}
             transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
           >
-            {[...marqueeSkills, ...marqueeSkills].map((skill, i) => (
+            {[...t.hero.skills, ...t.hero.skills].map((skill, i) => (
               <span
                 key={`${skill}-${i}`}
                 className="text-sm text-gray-500 font-medium"
@@ -271,7 +263,7 @@ export function Hero() {
         className="absolute bottom-10 left-1/2 -translate-x-1/2 text-gray-400 hover:text-gray-900 transition-colors z-10"
         animate={{ y: [0, 8, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
-        aria-label="Scroll to about section"
+        aria-label={t.nav.scrollAbout}
       >
         <ArrowDown size={32} />
       </motion.button>
