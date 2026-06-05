@@ -307,6 +307,8 @@ export function StudyMaterials() {
     ? folderName(currentFolder)
     : t.studyMaterials.apRoot;
 
+  const isAtRoot = currentFolderId === null;
+
   return (
     <section
       id="study-materials"
@@ -348,35 +350,52 @@ export function StudyMaterials() {
             </span>
           </div>
 
-          <div className="flex flex-col lg:flex-row min-h-[560px]">
-            <aside className="lg:w-56 shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200">
-              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                {t.studyMaterials.treeTitle}
-              </div>
-              <nav className="p-2 max-h-48 lg:max-h-none lg:min-h-[480px] overflow-y-auto text-sm">
-                <button
-                  type="button"
-                  onClick={() => navigateTo(null)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left mb-1 ${
-                    currentFolderId === null
-                      ? "bg-blue-100/80 text-blue-900"
-                      : "hover:bg-gray-100 text-gray-700"
-                  }`}
+          <div
+            className={`min-h-[560px] ${
+              isAtRoot ? "flex flex-col lg:flex-row" : ""
+            }`}
+          >
+            <AnimatePresence initial={false}>
+              {isAtRoot && (
+                <motion.aside
+                  key="folder-sidebar"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "auto", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="lg:w-56 shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 overflow-hidden"
                 >
-                  <HardDrive size={15} className="shrink-0 text-gray-500" />
-                  <span>{t.studyMaterials.apRoot}</span>
-                </button>
-                <TreeFolderList
-                  folders={filteredRootFolders}
-                  depth={0}
-                  currentFolderId={currentFolderId}
-                  locale={locale}
-                  onOpen={(id) => navigateTo(id)}
-                />
-              </nav>
-            </aside>
+                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                    {t.studyMaterials.treeTitle}
+                  </div>
+                  <nav className="p-2 max-h-48 lg:max-h-none lg:min-h-[480px] overflow-y-auto text-sm w-56">
+                    <button
+                      type="button"
+                      onClick={() => navigateTo(null)}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left mb-1 bg-blue-100/80 text-blue-900"
+                    >
+                      <HardDrive size={15} className="shrink-0 text-gray-500" />
+                      <span>{t.studyMaterials.apRoot}</span>
+                    </button>
+                    <TreeFolderList
+                      folders={filteredRootFolders}
+                      depth={0}
+                      currentFolderId={currentFolderId}
+                      locale={locale}
+                      onOpen={(id) => navigateTo(id)}
+                    />
+                  </nav>
+                </motion.aside>
+              )}
+            </AnimatePresence>
 
-            <div className="flex-1 flex flex-col min-w-0 bg-white">
+            <motion.div
+              key={currentFolderId ?? "root"}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1 flex flex-col min-w-0 bg-white"
+            >
               <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-200 bg-gray-50">
                 <button
                   type="button"
@@ -600,7 +619,7 @@ export function StudyMaterials() {
               <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 text-xs text-gray-500">
                 {t.studyMaterials.hint}
               </div>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
