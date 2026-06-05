@@ -1,15 +1,18 @@
 import { useMemo, useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Folder,
   FileText,
   FileType,
   Download,
   ChevronRight,
-  ChevronDown,
   Search,
   ArrowUp,
   FolderOpen,
+  Eye,
+  X,
+  ChevronLeft,
+  HardDrive,
 } from "lucide-react";
 import { useInViewOnScrollDown } from "@/app/components/ui/use-in-view-scroll-down";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -26,11 +29,21 @@ import {
   type StudyFolder,
 } from "@/data/apStudyMaterials";
 
-function FileIcon({ type }: { type: StudyFile["type"] }) {
+type ExplorerItem =
+  | { kind: "folder"; folder: StudyFolder }
+  | { kind: "file"; file: StudyFile; storagePath: string };
+
+type PreviewTarget = {
+  file: StudyFile;
+  storagePath: string;
+  url: string;
+};
+
+function FileIcon({ type, size = 20 }: { type: StudyFile["type"]; size?: number }) {
   if (type === "docx") {
-    return <FileType size={28} className="text-blue-600" />;
+    return <FileType size={size} className="text-blue-600 shrink-0" />;
   }
-  return <FileText size={28} className="text-red-500" />;
+  return <FileText size={size} className="text-red-500 shrink-0" />;
 }
 
 function TreeFolderList({
@@ -50,34 +63,130 @@ function TreeFolderList({
     locale === "zh" ? folder.nameZh : folder.nameEn;
 
   return (
-    <ul className={depth > 0 ? "ml-4 border-l border-gray-100" : ""}>
-      {folders.map((folder) => (
-        <li key={folder.id}>
-          <button
-            type="button"
-            onClick={() => onOpen(folder.id)}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left hover:bg-gray-50 ${
-              currentFolderId === folder.id ? "bg-emerald-50 text-emerald-800" : ""
-            }`}
-          >
-            <Folder size={16} className="shrink-0 text-amber-600" />
-            <span className="truncate">{folderName(folder)}</span>
-            <span className="ml-auto text-xs text-gray-400">
-              {getFolderItemCount(folder)}
-            </span>
-          </button>
-          {folder.children && (
-            <TreeFolderList
-              folders={folder.children}
-              depth={depth + 1}
-              currentFolderId={currentFolderId}
-              locale={locale}
-              onOpen={onOpen}
-            />
-          )}
-        </li>
-      ))}
+    <ul className={depth > 0 ? "ml-3 border-l border-gray-200" : ""}>
+      {folders.map((folder) => {
+        const isActive =
+          currentFolderId === folder.id ||
+          getBreadcrumb(currentFolderId ?? "", locale).some(
+            (item) => item.id === folder.id
+          );
+        return (
+          <li key={folder.id}>
+            <button
+              type="button"
+              onClick={() => onOpen(folder.id)}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm ${
+                isActive
+                  ? "bg-blue-100/80 text-blue-900"
+                  : "hover:bg-gray-100 text-gray-700"
+              }`}
+            >
+              <Folder
+                size={15}
+                className={`shrink-0 ${isActive ? "text-amber-600 fill-amber-100" : "text-amber-500"}`}
+              />
+              <span className="truncate">{folderName(folder)}</span>
+            </button>
+            {folder.children && (
+              <TreeFolderList
+                folders={folder.children}
+                depth={depth + 1}
+                currentFolderId={currentFolderId}
+                locale={locale}
+                onOpen={onOpen}
+              />
+            )}
+          </li>
+        );
+      })}
     </ul>
+  );
+}
+
+function PreviewModal({
+  preview,
+  locale,
+  onClose,
+  labels,
+}: {
+  preview: PreviewTarget;
+  locale: "en" | "zh";
+  onClose: () => void;
+  labels: {
+    close: string;
+    download: string;
+    previewDocxHint: string;
+  };
+}) {
+  const name = locale === "zh" ? preview.file.nameZh : preview.file.nameEn;
+  const officeEmbed =
+    preview.file.type === "docx"
+      ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+          new URL(preview.url, window.location.origin).href
+        )}`
+      : null;
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-gray-200"
+        initial={{ scale: 0.96, y: 12 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.96, y: 12 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileIcon type={preview.file.type} size={18} />
+            <span className="font-medium text-gray-900 truncate">{name}</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={preview.url}
+              download
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-white transition-colors"
+            >
+              <Download size={14} />
+              {labels.download}
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors"
+              aria-label={labels.close}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 bg-gray-100 relative">
+          {preview.file.type === "pdf" ? (
+            <iframe
+              src={preview.url}
+              title={name}
+              className="absolute inset-0 w-full h-full border-0 bg-white"
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col">
+              <iframe
+                src={officeEmbed ?? undefined}
+                title={name}
+                className="flex-1 w-full border-0 bg-white"
+              />
+              <p className="text-xs text-gray-500 px-4 py-2 bg-gray-50 border-t border-gray-200">
+                {labels.previewDocxHint}
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -88,6 +197,10 @@ export function StudyMaterials() {
   });
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
+  const [navHistory, setNavHistory] = useState<(string | null)[]>([null]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   const folderName = (folder: StudyFolder) =>
     locale === "zh" ? folder.nameZh : folder.nameEn;
@@ -102,74 +215,97 @@ export function StudyMaterials() {
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  const filteredFolders = useMemo(
+  const filteredRootFolders = useMemo(
     () => filterStudyFolders(apStudyFolders, normalizedQuery, locale),
     [normalizedQuery, locale]
   );
 
-  const visibleChildFolders = useMemo(() => {
-    if (!currentFolder?.children) return [];
-    if (!normalizedQuery) return currentFolder.children;
-    return currentFolder.children.filter((child) =>
-      filterStudyFolders([child], normalizedQuery, locale).length > 0
-    );
-  }, [currentFolder, normalizedQuery, locale]);
+  const breadcrumbTrail = useMemo(() => {
+    if (!currentFolderId) return [];
+    return getBreadcrumb(currentFolderId, locale);
+  }, [currentFolderId, locale]);
 
-  const visibleFiles = useMemo(() => {
-    if (!currentFolder?.files) return [];
-    if (!normalizedQuery) return currentFolder.files;
-    return currentFolder.files.filter(
-      (file) =>
-        fileName(file).toLowerCase().includes(normalizedQuery) ||
-        file.filename.toLowerCase().includes(normalizedQuery)
-    );
-  }, [currentFolder, normalizedQuery, locale]);
+  const explorerItems = useMemo((): ExplorerItem[] => {
+    if (!currentFolder) {
+      return filteredRootFolders.map((folder) => ({
+        kind: "folder",
+        folder,
+      }));
+    }
+    if (currentFolder.children) {
+      const children = normalizedQuery
+        ? currentFolder.children.filter(
+            (child) => filterStudyFolders([child], normalizedQuery, locale).length > 0
+          )
+        : currentFolder.children;
+      return children.map((folder) => ({ kind: "folder", folder }));
+    }
+    if (currentFolder.files) {
+      const files = normalizedQuery
+        ? currentFolder.files.filter(
+            (file) =>
+              fileName(file).toLowerCase().includes(normalizedQuery) ||
+              file.filename.toLowerCase().includes(normalizedQuery)
+          )
+        : currentFolder.files;
+      return files.map((file) => ({
+        kind: "file",
+        file,
+        storagePath: currentFolder.storagePath,
+      }));
+    }
+    return [];
+  }, [currentFolder, filteredRootFolders, normalizedQuery, locale]);
 
-  const breadcrumb = useMemo(() => {
-    if (!currentFolderId) return [t.studyMaterials.rootLabel];
-    const trail = getBreadcrumb(currentFolderId, locale);
-    return [t.studyMaterials.rootLabel, ...trail.map(folderName)];
-  }, [currentFolderId, locale, t.studyMaterials.rootLabel]);
-
-  const openFolder = (folderId: string | null) => {
+  const navigateTo = (folderId: string | null, pushHistory = true) => {
     setCurrentFolderId(folderId);
-    setSearchQuery("");
+    setSelectedId(null);
+    if (pushHistory) {
+      const next = navHistory.slice(0, historyIndex + 1);
+      next.push(folderId);
+      setNavHistory(next);
+      setHistoryIndex(next.length - 1);
+    }
+  };
+
+  const goBack = () => {
+    if (historyIndex <= 0) return;
+    const nextIndex = historyIndex - 1;
+    setHistoryIndex(nextIndex);
+    setCurrentFolderId(navHistory[nextIndex]);
+    setSelectedId(null);
+  };
+
+  const goForward = () => {
+    if (historyIndex >= navHistory.length - 1) return;
+    const nextIndex = historyIndex + 1;
+    setHistoryIndex(nextIndex);
+    setCurrentFolderId(navHistory[nextIndex]);
+    setSelectedId(null);
   };
 
   const goUp = () => {
     if (!currentFolderId) return;
     const parentId = findParentFolderId(currentFolderId);
-    openFolder(parentId ?? null);
+    navigateTo(parentId ?? null);
   };
 
-  const renderFolderCards = (folders: StudyFolder[]) => (
-    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      {folders.map((folder) => (
-        <button
-          key={folder.id}
-          type="button"
-          onClick={() => openFolder(folder.id)}
-          className="group text-left bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
-        >
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500" />
-          <div className="flex items-start gap-3 pl-2">
-            <Folder
-              size={32}
-              className="text-amber-600 shrink-0 group-hover:scale-105 transition-transform"
-            />
-            <div className="min-w-0">
-              <p className="font-semibold text-gray-900 truncate">
-                {folderName(folder)}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                {getFolderItemCount(folder)} {t.studyMaterials.files}
-              </p>
-            </div>
-          </div>
-        </button>
-      ))}
-    </div>
-  );
+  const openPreview = (file: StudyFile, storagePath: string) => {
+    const url = getStudyFileUrl(storagePath, file.filename);
+    setPreview({ file, storagePath, url });
+  };
+
+  const handleItemOpen = (item: ExplorerItem) => {
+    if (item.kind === "folder") {
+      navigateTo(item.folder.id);
+      return;
+    }
+    openPreview(item.file, item.storagePath);
+  };
+
+  const currentLocationLabel = currentFolder
+    ? folderName(currentFolder)
+    : t.studyMaterials.apRoot;
 
   return (
     <section
@@ -196,155 +332,293 @@ export function StudyMaterials() {
         </motion.div>
 
         <motion.div
-          className="grid lg:grid-cols-[280px_1fr] gap-6 items-start"
+          className="rounded-2xl border border-gray-300 shadow-xl overflow-hidden bg-[#f0f0f0]"
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={transition({ duration: 0.8, delay: 0.15 })}
         >
-          <aside className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 bg-emerald-700 text-white font-semibold text-sm">
-              {t.studyMaterials.treeTitle}
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gray-100 to-gray-50 border-b border-gray-300">
+            <div className="flex gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-red-400" />
+              <span className="w-3 h-3 rounded-full bg-amber-400" />
+              <span className="w-3 h-3 rounded-full bg-emerald-400" />
             </div>
-            <div className="p-3 border-b border-gray-100">
-              <div className="relative">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t.studyMaterials.searchTree}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                />
+            <span className="text-sm font-medium text-gray-600 ml-2">
+              {t.studyMaterials.windowTitle}
+            </span>
+          </div>
+
+          <div className="flex flex-col lg:flex-row min-h-[560px]">
+            <aside className="lg:w-56 shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200">
+              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                {t.studyMaterials.treeTitle}
               </div>
-            </div>
-            <nav className="p-2 max-h-[420px] overflow-y-auto text-sm">
-              <button
-                type="button"
-                onClick={() => openFolder(null)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left hover:bg-gray-50 ${
-                  currentFolderId === null ? "bg-emerald-50 text-emerald-800" : ""
-                }`}
-              >
-                <ChevronDown size={16} className="shrink-0 text-gray-500" />
-                <FolderOpen size={16} className="shrink-0 text-amber-600" />
-                <span>{t.studyMaterials.apRoot}</span>
-              </button>
+              <nav className="p-2 max-h-48 lg:max-h-none lg:min-h-[480px] overflow-y-auto text-sm">
+                <button
+                  type="button"
+                  onClick={() => navigateTo(null)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left mb-1 ${
+                    currentFolderId === null
+                      ? "bg-blue-100/80 text-blue-900"
+                      : "hover:bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <HardDrive size={15} className="shrink-0 text-gray-500" />
+                  <span>{t.studyMaterials.apRoot}</span>
+                </button>
+                <TreeFolderList
+                  folders={filteredRootFolders}
+                  depth={0}
+                  currentFolderId={currentFolderId}
+                  locale={locale}
+                  onOpen={(id) => navigateTo(id)}
+                />
+              </nav>
+            </aside>
 
-              <TreeFolderList
-                folders={filteredFolders}
-                depth={1}
-                currentFolderId={currentFolderId}
-                locale={locale}
-                onOpen={openFolder}
-              />
-            </nav>
-          </aside>
-
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden min-h-[520px] flex flex-col">
-            <div className="px-5 py-3 bg-violet-700 text-white flex items-center gap-2 font-semibold">
-              <FolderOpen size={18} />
-              <span>
-                {currentFolder ? folderName(currentFolder) : t.studyMaterials.rootLabel}
-              </span>
-            </div>
-
-            <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-              <div className="flex items-center gap-1 text-sm text-gray-500 flex-wrap">
-                {breadcrumb.map((crumb, index) => (
-                  <span key={`${crumb}-${index}`} className="flex items-center gap-1">
-                    {index > 0 && <ChevronRight size={14} />}
-                    <span>{crumb}</span>
-                  </span>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 flex flex-col min-w-0 bg-white">
+              <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-200 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  disabled={historyIndex <= 0}
+                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
+                  title={t.studyMaterials.back}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={goForward}
+                  disabled={historyIndex >= navHistory.length - 1}
+                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
+                  title={t.studyMaterials.forward}
+                >
+                  <ChevronRight size={18} />
+                </button>
                 <button
                   type="button"
                   onClick={goUp}
                   disabled={currentFolderId === null}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 inline-flex items-center gap-2"
+                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
+                  title={t.studyMaterials.up}
                 >
-                  <ArrowUp size={16} />
-                  {t.studyMaterials.up}
+                  <ArrowUp size={18} />
                 </button>
-              </div>
-            </div>
 
-            <div className="p-4 border-b border-gray-100">
-              <div className="relative max-w-md">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t.studyMaterials.searchFiles}
-                  className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-                />
-              </div>
-            </div>
-
-            <div className="p-5 flex-1">
-              {!currentFolder ? (
-                renderFolderCards(filteredFolders)
-              ) : currentFolder.children ? (
-                visibleChildFolders.length === 0 ? (
-                  <p className="text-gray-500 text-center py-16">
-                    {t.studyMaterials.noResults}
-                  </p>
-                ) : (
-                  renderFolderCards(visibleChildFolders)
-                )
-              ) : visibleFiles.length === 0 ? (
-                <p className="text-gray-500 text-center py-16">
-                  {t.studyMaterials.noResults}
-                </p>
-              ) : (
-                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {visibleFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col"
-                    >
-                      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500" />
-                      <div className="flex items-start gap-3 pl-2 flex-1">
-                        <FileIcon type={file.type} />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-gray-900 leading-snug">
-                            {fileName(file)}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-2 uppercase">
-                            {file.type}
-                          </p>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {formatFileSize(file.size)}
-                          </p>
-                        </div>
-                      </div>
-                      <a
-                        href={getStudyFileUrl(
-                          currentFolder.storagePath,
-                          file.filename
-                        )}
-                        download
-                        className="mt-4 inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
+                <div className="flex-1 flex items-center gap-1 mx-2 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm min-w-0 overflow-x-auto">
+                  <FolderOpen size={14} className="text-amber-600 shrink-0" />
+                  <button
+                    type="button"
+                    onClick={() => navigateTo(null)}
+                    className="shrink-0 hover:underline text-gray-700"
+                  >
+                    {t.studyMaterials.apRoot}
+                  </button>
+                  {breadcrumbTrail.map((folder) => (
+                    <span key={folder.id} className="flex items-center gap-1 shrink-0">
+                      <ChevronRight size={12} className="text-gray-400" />
+                      <button
+                        type="button"
+                        onClick={() => navigateTo(folder.id)}
+                        className="hover:underline text-gray-700"
                       >
-                        <Download size={16} />
-                        {t.studyMaterials.download}
-                      </a>
-                    </div>
+                        {folderName(folder)}
+                      </button>
+                    </span>
                   ))}
                 </div>
-              )}
+
+                <div className="relative w-44 shrink-0 hidden sm:block">
+                  <Search
+                    size={14}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t.studyMaterials.searchFiles}
+                    className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                </div>
+              </div>
+
+              <div className="px-3 py-2 border-b border-gray-100 text-sm text-gray-600 flex items-center gap-2">
+                <span className="font-medium text-gray-800">{currentLocationLabel}</span>
+                <span className="text-gray-400">·</span>
+                <span>
+                  {explorerItems.length} {t.studyMaterials.items}
+                </span>
+              </div>
+
+              <div className="flex-1 overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-gray-50 border-b border-gray-200 text-left text-xs text-gray-500 uppercase tracking-wide">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">{t.studyMaterials.name}</th>
+                      <th className="px-4 py-2 font-medium hidden sm:table-cell">
+                        {t.studyMaterials.type}
+                      </th>
+                      <th className="px-4 py-2 font-medium hidden md:table-cell">
+                        {t.studyMaterials.size}
+                      </th>
+                      <th className="px-4 py-2 font-medium text-right">
+                        {t.studyMaterials.actions}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <AnimatePresence mode="popLayout">
+                      {explorerItems.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-16 text-center text-gray-500">
+                            {t.studyMaterials.noResults}
+                          </td>
+                        </tr>
+                      ) : (
+                        explorerItems.map((item, index) => {
+                          const rowId =
+                            item.kind === "folder" ? item.folder.id : item.file.id;
+                          const isSelected = selectedId === rowId;
+
+                          if (item.kind === "folder") {
+                            return (
+                              <motion.tr
+                                key={rowId}
+                                layout
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.15, delay: index * 0.02 }}
+                                onClick={() => setSelectedId(rowId)}
+                                onDoubleClick={() => handleItemOpen(item)}
+                                className={`border-b border-gray-100 cursor-pointer select-none ${
+                                  isSelected ? "bg-blue-50" : "hover:bg-gray-50"
+                                }`}
+                              >
+                                <td className="px-4 py-2.5">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <Folder
+                                      size={18}
+                                      className="text-amber-500 fill-amber-100 shrink-0"
+                                    />
+                                    <span className="truncate font-medium text-gray-900">
+                                      {folderName(item.folder)}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-2.5 text-gray-500 hidden sm:table-cell">
+                                  {t.studyMaterials.fileFolder}
+                                </td>
+                                <td className="px-4 py-2.5 text-gray-500 hidden md:table-cell">
+                                  {getFolderItemCount(item.folder)} {t.studyMaterials.files}
+                                </td>
+                                <td className="px-4 py-2.5 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleItemOpen(item);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+                                  >
+                                    <FolderOpen size={13} />
+                                    {t.studyMaterials.open}
+                                  </button>
+                                </td>
+                              </motion.tr>
+                            );
+                          }
+
+                          const url = getStudyFileUrl(
+                            item.storagePath,
+                            item.file.filename
+                          );
+
+                          return (
+                            <motion.tr
+                              key={rowId}
+                              layout
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.15, delay: index * 0.02 }}
+                              onClick={() => setSelectedId(rowId)}
+                              onDoubleClick={() => openPreview(item.file, item.storagePath)}
+                              className={`border-b border-gray-100 cursor-pointer select-none ${
+                                isSelected ? "bg-blue-50" : "hover:bg-gray-50"
+                              }`}
+                            >
+                              <td className="px-4 py-2.5">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <FileIcon type={item.file.type} size={18} />
+                                  <span className="truncate text-gray-900">
+                                    {fileName(item.file)}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-2.5 text-gray-500 uppercase hidden sm:table-cell">
+                                {item.file.type}
+                              </td>
+                              <td className="px-4 py-2.5 text-gray-500 hidden md:table-cell">
+                                {formatFileSize(item.file.size)}
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openPreview(item.file, item.storagePath);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                  >
+                                    <Eye size={13} />
+                                    {t.studyMaterials.preview}
+                                  </button>
+                                  <a
+                                    href={url}
+                                    download
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                  >
+                                    <Download size={13} />
+                                    {t.studyMaterials.download}
+                                  </a>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          );
+                        })
+                      )}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 text-xs text-gray-500">
+                {t.studyMaterials.hint}
+              </div>
             </div>
           </div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {preview && (
+          <PreviewModal
+            preview={preview}
+            locale={locale}
+            onClose={() => setPreview(null)}
+            labels={{
+              close: t.studyMaterials.closePreview,
+              download: t.studyMaterials.download,
+              previewDocxHint: t.studyMaterials.previewDocxHint,
+            }}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }
