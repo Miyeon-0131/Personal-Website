@@ -154,6 +154,21 @@ const en = {
       },
     ] as ApItem[],
   },
+  studyMaterials: {
+    badge: "Learning Materials Sharing",
+    title: "AP Study Materials",
+    subtitle:
+      "Browse and download AP review handbooks, equation sheets, and notes organized by subject.",
+    treeTitle: "Course Structure",
+    apRoot: "AP Study Materials",
+    rootLabel: "Root",
+    searchTree: "Search in tree",
+    searchFiles: "Search files",
+    up: "UP",
+    download: "Download",
+    files: "files",
+    noResults: "No matching files found.",
+  },
   awards: {
     title: "Awards & Honors",
     zhenfundTitle: "ZhenFund — AI Desmos",
@@ -428,6 +443,21 @@ const zh: typeof en = {
         scoreProofAlt: "College Board AP 预备微积分 成绩 — 5 分",
       },
     ],
+  },
+  studyMaterials: {
+    badge: "学习资料分享",
+    title: "AP 学习资料",
+    subtitle:
+      "按科目整理的 AP 复习手册、公式表与讲义，访客可直接浏览并下载所需文件。",
+    treeTitle: "课程结构",
+    apRoot: "AP 学习资料",
+    rootLabel: "根目录",
+    searchTree: "在目录中搜索",
+    searchFiles: "搜索文件",
+    up: "返回上级",
+    download: "下载",
+    files: "个文件",
+    noResults: "未找到匹配的文件。",
   },
   awards: {
     title: "奖项与荣誉",
