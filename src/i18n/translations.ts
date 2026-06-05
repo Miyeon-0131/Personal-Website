@@ -181,8 +181,9 @@ const en = {
     items: "items",
     noResults: "This folder is empty.",
     hint: "Double-click a folder to open · Double-click a file to preview",
-    previewDocxHint:
-      "Word preview uses Microsoft Office Online. If it does not load, use Download instead.",
+    openDriveHint: "Double-click to open",
+    previewLoading: "Loading preview…",
+    previewError: "Preview failed. Please download the file instead.",
   },
   awards: {
     title: "Awards & Honors",
@@ -486,8 +487,9 @@ const zh: typeof en = {
     items: "项",
     noResults: "此文件夹为空。",
     hint: "双击文件夹打开 · 双击文件预览",
-    previewDocxHint:
-      "Word 预览通过 Microsoft Office Online 加载，若无法显示请直接下载。",
+    openDriveHint: "双击打开",
+    previewLoading: "正在加载预览…",
+    previewError: "预览失败，请直接下载文件。",
   },
   awards: {
     title: "奖项与荣誉",

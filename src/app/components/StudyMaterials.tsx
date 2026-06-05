@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import mammoth from "mammoth";
 import {
   Folder,
   FileText,
@@ -13,6 +14,7 @@ import {
   X,
   ChevronLeft,
   HardDrive,
+  Loader2,
 } from "lucide-react";
 import { useInViewOnScrollDown } from "@/app/components/ui/use-in-view-scroll-down";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -46,63 +48,6 @@ function FileIcon({ type, size = 20 }: { type: StudyFile["type"]; size?: number 
   return <FileText size={size} className="text-red-500 shrink-0" />;
 }
 
-function TreeFolderList({
-  folders,
-  depth,
-  currentFolderId,
-  locale,
-  onOpen,
-}: {
-  folders: StudyFolder[];
-  depth: number;
-  currentFolderId: string | null;
-  locale: "en" | "zh";
-  onOpen: (folderId: string) => void;
-}) {
-  const folderName = (folder: StudyFolder) =>
-    locale === "zh" ? folder.nameZh : folder.nameEn;
-
-  return (
-    <ul className={depth > 0 ? "ml-3 border-l border-gray-200" : ""}>
-      {folders.map((folder) => {
-        const isActive =
-          currentFolderId === folder.id ||
-          getBreadcrumb(currentFolderId ?? "", locale).some(
-            (item) => item.id === folder.id
-          );
-        return (
-          <li key={folder.id}>
-            <button
-              type="button"
-              onClick={() => onOpen(folder.id)}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm ${
-                isActive
-                  ? "bg-blue-100/80 text-blue-900"
-                  : "hover:bg-gray-100 text-gray-700"
-              }`}
-            >
-              <Folder
-                size={15}
-                className={`shrink-0 ${isActive ? "text-amber-600 fill-amber-100" : "text-amber-500"}`}
-              />
-              <span className="truncate">{folderName(folder)}</span>
-            </button>
-            {folder.children && (
-              <TreeFolderList
-                folders={folder.children}
-                depth={depth + 1}
-                currentFolderId={currentFolderId}
-                locale={locale}
-                onOpen={onOpen}
-              />
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 function PreviewModal({
   preview,
   locale,
@@ -115,16 +60,43 @@ function PreviewModal({
   labels: {
     close: string;
     download: string;
-    previewDocxHint: string;
+    previewLoading: string;
+    previewError: string;
   };
 }) {
   const name = locale === "zh" ? preview.file.nameZh : preview.file.nameEn;
-  const officeEmbed =
-    preview.file.type === "docx"
-      ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-          new URL(preview.url, window.location.origin).href
-        )}`
-      : null;
+  const [docxHtml, setDocxHtml] = useState<string | null>(null);
+  const [docxLoading, setDocxLoading] = useState(preview.file.type === "docx");
+  const [docxError, setDocxError] = useState(false);
+
+  useEffect(() => {
+    if (preview.file.type !== "docx") return;
+
+    let cancelled = false;
+    setDocxLoading(true);
+    setDocxError(false);
+    setDocxHtml(null);
+
+    fetch(preview.url)
+      .then((res) => {
+        if (!res.ok) throw new Error("fetch failed");
+        return res.arrayBuffer();
+      })
+      .then((buffer) => mammoth.convertToHtml({ arrayBuffer: buffer }))
+      .then((result) => {
+        if (!cancelled) setDocxHtml(result.value);
+      })
+      .catch(() => {
+        if (!cancelled) setDocxError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setDocxLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [preview.url, preview.file.type]);
 
   return (
     <motion.div
@@ -165,28 +137,72 @@ function PreviewModal({
             </button>
           </div>
         </div>
-        <div className="flex-1 bg-gray-100 relative">
+        <div className="flex-1 bg-gray-100 relative overflow-hidden">
           {preview.file.type === "pdf" ? (
             <iframe
               src={preview.url}
               title={name}
               className="absolute inset-0 w-full h-full border-0 bg-white"
             />
-          ) : (
-            <div className="absolute inset-0 flex flex-col">
-              <iframe
-                src={officeEmbed ?? undefined}
-                title={name}
-                className="flex-1 w-full border-0 bg-white"
-              />
-              <p className="text-xs text-gray-500 px-4 py-2 bg-gray-50 border-t border-gray-200">
-                {labels.previewDocxHint}
-              </p>
+          ) : docxLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-white text-gray-500 gap-2">
+              <Loader2 size={20} className="animate-spin" />
+              {labels.previewLoading}
             </div>
+          ) : docxError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white text-gray-500 gap-3 px-6 text-center">
+              <p>{labels.previewError}</p>
+              <a
+                href={preview.url}
+                download
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                <Download size={14} />
+                {labels.download}
+              </a>
+            </div>
+          ) : (
+            <div
+              className="absolute inset-0 overflow-auto bg-white p-8 docx-preview"
+              dangerouslySetInnerHTML={{ __html: docxHtml ?? "" }}
+            />
           )}
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function DriveLanding({
+  label,
+  hint,
+  onOpen,
+}: {
+  label: string;
+  hint: string;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="flex-1 flex items-center justify-center bg-white min-h-[480px] p-8">
+      <button
+        type="button"
+        onDoubleClick={onOpen}
+        onClick={onOpen}
+        className="group flex flex-col items-center gap-4 p-10 rounded-2xl hover:bg-blue-50/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+      >
+        <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200 shadow-inner group-hover:from-blue-50 group-hover:to-blue-100 transition-colors">
+          <HardDrive
+            size={72}
+            className="text-slate-500 group-hover:text-blue-600 transition-colors"
+            strokeWidth={1.25}
+          />
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-900">{label}</p>
+          <p className="text-sm text-gray-500 mt-1">{hint}</p>
+        </div>
+      </button>
+    </div>
   );
 }
 
@@ -195,6 +211,7 @@ export function StudyMaterials() {
   const { ref, isVisible, transition } = useInViewOnScrollDown({
     margin: "-100px",
   });
+  const [isDriveView, setIsDriveView] = useState(true);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -257,6 +274,15 @@ export function StudyMaterials() {
     return [];
   }, [currentFolder, filteredRootFolders, normalizedQuery, locale]);
 
+  const openDrive = () => {
+    setIsDriveView(false);
+    setCurrentFolderId(null);
+    setSearchQuery("");
+    setSelectedId(null);
+    setNavHistory([null]);
+    setHistoryIndex(0);
+  };
+
   const navigateTo = (folderId: string | null, pushHistory = true) => {
     setCurrentFolderId(folderId);
     setSelectedId(null);
@@ -268,8 +294,21 @@ export function StudyMaterials() {
     }
   };
 
+  const returnToDrive = () => {
+    setIsDriveView(true);
+    setCurrentFolderId(null);
+    setSearchQuery("");
+    setSelectedId(null);
+    setNavHistory([null]);
+    setHistoryIndex(0);
+  };
+
   const goBack = () => {
-    if (historyIndex <= 0) return;
+    if (isDriveView) return;
+    if (historyIndex <= 0) {
+      returnToDrive();
+      return;
+    }
     const nextIndex = historyIndex - 1;
     setHistoryIndex(nextIndex);
     setCurrentFolderId(navHistory[nextIndex]);
@@ -277,7 +316,7 @@ export function StudyMaterials() {
   };
 
   const goForward = () => {
-    if (historyIndex >= navHistory.length - 1) return;
+    if (isDriveView || historyIndex >= navHistory.length - 1) return;
     const nextIndex = historyIndex + 1;
     setHistoryIndex(nextIndex);
     setCurrentFolderId(navHistory[nextIndex]);
@@ -285,9 +324,13 @@ export function StudyMaterials() {
   };
 
   const goUp = () => {
-    if (!currentFolderId) return;
-    const parentId = findParentFolderId(currentFolderId);
-    navigateTo(parentId ?? null);
+    if (isDriveView) return;
+    if (currentFolderId !== null) {
+      const parentId = findParentFolderId(currentFolderId);
+      navigateTo(parentId ?? null);
+      return;
+    }
+    returnToDrive();
   };
 
   const openPreview = (file: StudyFile, storagePath: string) => {
@@ -306,8 +349,6 @@ export function StudyMaterials() {
   const currentLocationLabel = currentFolder
     ? folderName(currentFolder)
     : t.studyMaterials.apRoot;
-
-  const isAtRoot = currentFolderId === null;
 
   return (
     <section
@@ -350,276 +391,250 @@ export function StudyMaterials() {
             </span>
           </div>
 
-          <div
-            className={`min-h-[560px] ${
-              isAtRoot ? "flex flex-col lg:flex-row" : ""
-            }`}
-          >
-            <AnimatePresence initial={false}>
-              {isAtRoot && (
-                <motion.aside
-                  key="folder-sidebar"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "auto", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
+          <div className="min-h-[560px] flex flex-col bg-white">
+            <AnimatePresence mode="wait">
+              {isDriveView ? (
+                <motion.div
+                  key="drive-view"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="lg:w-56 shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 overflow-hidden"
+                  className="flex-1 flex flex-col"
                 >
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                    {t.studyMaterials.treeTitle}
-                  </div>
-                  <nav className="p-2 max-h-48 lg:max-h-none lg:min-h-[480px] overflow-y-auto text-sm w-56">
+                  <DriveLanding
+                    label={t.studyMaterials.apRoot}
+                    hint={t.studyMaterials.openDriveHint}
+                    onOpen={openDrive}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={currentFolderId ?? "root"}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 flex flex-col min-w-0"
+                >
+                  <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-200 bg-gray-50">
                     <button
                       type="button"
-                      onClick={() => navigateTo(null)}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left mb-1 bg-blue-100/80 text-blue-900"
+                      onClick={goBack}
+                      className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+                      title={t.studyMaterials.back}
                     >
-                      <HardDrive size={15} className="shrink-0 text-gray-500" />
-                      <span>{t.studyMaterials.apRoot}</span>
+                      <ChevronLeft size={18} />
                     </button>
-                    <TreeFolderList
-                      folders={filteredRootFolders}
-                      depth={0}
-                      currentFolderId={currentFolderId}
-                      locale={locale}
-                      onOpen={(id) => navigateTo(id)}
-                    />
-                  </nav>
-                </motion.aside>
-              )}
-            </AnimatePresence>
+                    <button
+                      type="button"
+                      onClick={goForward}
+                      disabled={historyIndex >= navHistory.length - 1}
+                      className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
+                      title={t.studyMaterials.forward}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goUp}
+                      className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+                      title={t.studyMaterials.up}
+                    >
+                      <ArrowUp size={18} />
+                    </button>
 
-            <motion.div
-              key={currentFolderId ?? "root"}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 flex flex-col min-w-0 bg-white"
-            >
-              <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-200 bg-gray-50">
-                <button
-                  type="button"
-                  onClick={goBack}
-                  disabled={historyIndex <= 0}
-                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
-                  title={t.studyMaterials.back}
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={goForward}
-                  disabled={historyIndex >= navHistory.length - 1}
-                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
-                  title={t.studyMaterials.forward}
-                >
-                  <ChevronRight size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={goUp}
-                  disabled={currentFolderId === null}
-                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
-                  title={t.studyMaterials.up}
-                >
-                  <ArrowUp size={18} />
-                </button>
-
-                <div className="flex-1 flex items-center gap-1 mx-2 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm min-w-0 overflow-x-auto">
-                  <FolderOpen size={14} className="text-amber-600 shrink-0" />
-                  <button
-                    type="button"
-                    onClick={() => navigateTo(null)}
-                    className="shrink-0 hover:underline text-gray-700"
-                  >
-                    {t.studyMaterials.apRoot}
-                  </button>
-                  {breadcrumbTrail.map((folder) => (
-                    <span key={folder.id} className="flex items-center gap-1 shrink-0">
-                      <ChevronRight size={12} className="text-gray-400" />
+                    <div className="flex-1 flex items-center gap-1 mx-2 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-sm min-w-0 overflow-x-auto">
+                      <HardDrive size={14} className="text-slate-500 shrink-0" />
                       <button
                         type="button"
-                        onClick={() => navigateTo(folder.id)}
-                        className="hover:underline text-gray-700"
+                        onClick={() => navigateTo(null)}
+                        className="shrink-0 hover:underline text-gray-700"
                       >
-                        {folderName(folder)}
+                        {t.studyMaterials.apRoot}
                       </button>
+                      {breadcrumbTrail.map((folder) => (
+                        <span key={folder.id} className="flex items-center gap-1 shrink-0">
+                          <ChevronRight size={12} className="text-gray-400" />
+                          <button
+                            type="button"
+                            onClick={() => navigateTo(folder.id)}
+                            className="hover:underline text-gray-700"
+                          >
+                            {folderName(folder)}
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="relative w-44 shrink-0 hidden sm:block">
+                      <Search
+                        size={14}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                      <input
+                        type="search"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={t.studyMaterials.searchFiles}
+                        className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="px-3 py-2 border-b border-gray-100 text-sm text-gray-600 flex items-center gap-2">
+                    <span className="font-medium text-gray-800">{currentLocationLabel}</span>
+                    <span className="text-gray-400">·</span>
+                    <span>
+                      {explorerItems.length} {t.studyMaterials.items}
                     </span>
-                  ))}
-                </div>
+                  </div>
 
-                <div className="relative w-44 shrink-0 hidden sm:block">
-                  <Search
-                    size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t.studyMaterials.searchFiles}
-                    className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                  />
-                </div>
-              </div>
-
-              <div className="px-3 py-2 border-b border-gray-100 text-sm text-gray-600 flex items-center gap-2">
-                <span className="font-medium text-gray-800">{currentLocationLabel}</span>
-                <span className="text-gray-400">·</span>
-                <span>
-                  {explorerItems.length} {t.studyMaterials.items}
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-auto">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-gray-50 border-b border-gray-200 text-left text-xs text-gray-500 uppercase tracking-wide">
-                    <tr>
-                      <th className="px-4 py-2 font-medium">{t.studyMaterials.name}</th>
-                      <th className="px-4 py-2 font-medium hidden sm:table-cell">
-                        {t.studyMaterials.type}
-                      </th>
-                      <th className="px-4 py-2 font-medium hidden md:table-cell">
-                        {t.studyMaterials.size}
-                      </th>
-                      <th className="px-4 py-2 font-medium text-right">
-                        {t.studyMaterials.actions}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <AnimatePresence mode="popLayout">
-                      {explorerItems.length === 0 ? (
+                  <div className="flex-1 overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-gray-50 border-b border-gray-200 text-left text-xs text-gray-500 uppercase tracking-wide">
                         <tr>
-                          <td colSpan={4} className="px-4 py-16 text-center text-gray-500">
-                            {t.studyMaterials.noResults}
-                          </td>
+                          <th className="px-4 py-2 font-medium">{t.studyMaterials.name}</th>
+                          <th className="px-4 py-2 font-medium hidden sm:table-cell">
+                            {t.studyMaterials.type}
+                          </th>
+                          <th className="px-4 py-2 font-medium hidden md:table-cell">
+                            {t.studyMaterials.size}
+                          </th>
+                          <th className="px-4 py-2 font-medium text-right">
+                            {t.studyMaterials.actions}
+                          </th>
                         </tr>
-                      ) : (
-                        explorerItems.map((item, index) => {
-                          const rowId =
-                            item.kind === "folder" ? item.folder.id : item.file.id;
-                          const isSelected = selectedId === rowId;
+                      </thead>
+                      <tbody>
+                        {explorerItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-16 text-center text-gray-500">
+                              {t.studyMaterials.noResults}
+                            </td>
+                          </tr>
+                        ) : (
+                          explorerItems.map((item, index) => {
+                            const rowId =
+                              item.kind === "folder" ? item.folder.id : item.file.id;
+                            const isSelected = selectedId === rowId;
 
-                          if (item.kind === "folder") {
+                            if (item.kind === "folder") {
+                              return (
+                                <motion.tr
+                                  key={rowId}
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.15, delay: index * 0.02 }}
+                                  onClick={() => setSelectedId(rowId)}
+                                  onDoubleClick={() => handleItemOpen(item)}
+                                  className={`border-b border-gray-100 cursor-pointer select-none ${
+                                    isSelected ? "bg-blue-50" : "hover:bg-gray-50"
+                                  }`}
+                                >
+                                  <td className="px-4 py-2.5">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <Folder
+                                        size={18}
+                                        className="text-amber-500 fill-amber-100 shrink-0"
+                                      />
+                                      <span className="truncate font-medium text-gray-900">
+                                        {folderName(item.folder)}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-2.5 text-gray-500 hidden sm:table-cell">
+                                    {t.studyMaterials.fileFolder}
+                                  </td>
+                                  <td className="px-4 py-2.5 text-gray-500 hidden md:table-cell">
+                                    {getFolderItemCount(item.folder)} {t.studyMaterials.files}
+                                  </td>
+                                  <td className="px-4 py-2.5 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleItemOpen(item);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+                                    >
+                                      <FolderOpen size={13} />
+                                      {t.studyMaterials.open}
+                                    </button>
+                                  </td>
+                                </motion.tr>
+                              );
+                            }
+
+                            const url = getStudyFileUrl(
+                              item.storagePath,
+                              item.file.filename
+                            );
+
                             return (
                               <motion.tr
                                 key={rowId}
-                                layout
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
                                 transition={{ duration: 0.15, delay: index * 0.02 }}
                                 onClick={() => setSelectedId(rowId)}
-                                onDoubleClick={() => handleItemOpen(item)}
+                                onDoubleClick={() => openPreview(item.file, item.storagePath)}
                                 className={`border-b border-gray-100 cursor-pointer select-none ${
                                   isSelected ? "bg-blue-50" : "hover:bg-gray-50"
                                 }`}
                               >
                                 <td className="px-4 py-2.5">
                                   <div className="flex items-center gap-2.5 min-w-0">
-                                    <Folder
-                                      size={18}
-                                      className="text-amber-500 fill-amber-100 shrink-0"
-                                    />
-                                    <span className="truncate font-medium text-gray-900">
-                                      {folderName(item.folder)}
+                                    <FileIcon type={item.file.type} size={18} />
+                                    <span className="truncate text-gray-900">
+                                      {fileName(item.file)}
                                     </span>
                                   </div>
                                 </td>
-                                <td className="px-4 py-2.5 text-gray-500 hidden sm:table-cell">
-                                  {t.studyMaterials.fileFolder}
+                                <td className="px-4 py-2.5 text-gray-500 uppercase hidden sm:table-cell">
+                                  {item.file.type}
                                 </td>
                                 <td className="px-4 py-2.5 text-gray-500 hidden md:table-cell">
-                                  {getFolderItemCount(item.folder)} {t.studyMaterials.files}
+                                  {formatFileSize(item.file.size)}
                                 </td>
-                                <td className="px-4 py-2.5 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleItemOpen(item);
-                                    }}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
-                                  >
-                                    <FolderOpen size={13} />
-                                    {t.studyMaterials.open}
-                                  </button>
+                                <td className="px-4 py-2.5">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openPreview(item.file, item.storagePath);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                    >
+                                      <Eye size={13} />
+                                      {t.studyMaterials.preview}
+                                    </button>
+                                    <a
+                                      href={url}
+                                      download
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                    >
+                                      <Download size={13} />
+                                      {t.studyMaterials.download}
+                                    </a>
+                                  </div>
                                 </td>
                               </motion.tr>
                             );
-                          }
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
-                          const url = getStudyFileUrl(
-                            item.storagePath,
-                            item.file.filename
-                          );
-
-                          return (
-                            <motion.tr
-                              key={rowId}
-                              layout
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.15, delay: index * 0.02 }}
-                              onClick={() => setSelectedId(rowId)}
-                              onDoubleClick={() => openPreview(item.file, item.storagePath)}
-                              className={`border-b border-gray-100 cursor-pointer select-none ${
-                                isSelected ? "bg-blue-50" : "hover:bg-gray-50"
-                              }`}
-                            >
-                              <td className="px-4 py-2.5">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <FileIcon type={item.file.type} size={18} />
-                                  <span className="truncate text-gray-900">
-                                    {fileName(item.file)}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-2.5 text-gray-500 uppercase hidden sm:table-cell">
-                                {item.file.type}
-                              </td>
-                              <td className="px-4 py-2.5 text-gray-500 hidden md:table-cell">
-                                {formatFileSize(item.file.size)}
-                              </td>
-                              <td className="px-4 py-2.5">
-                                <div className="flex items-center justify-end gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openPreview(item.file, item.storagePath);
-                                    }}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-                                  >
-                                    <Eye size={13} />
-                                    {t.studyMaterials.preview}
-                                  </button>
-                                  <a
-                                    href={url}
-                                    download
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
-                                  >
-                                    <Download size={13} />
-                                    {t.studyMaterials.download}
-                                  </a>
-                                </div>
-                              </td>
-                            </motion.tr>
-                          );
-                        })
-                      )}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 text-xs text-gray-500">
-                {t.studyMaterials.hint}
-              </div>
-            </motion.div>
+                  <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 text-xs text-gray-500">
+                    {t.studyMaterials.hint}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>
@@ -633,7 +648,8 @@ export function StudyMaterials() {
             labels={{
               close: t.studyMaterials.closePreview,
               download: t.studyMaterials.download,
-              previewDocxHint: t.studyMaterials.previewDocxHint,
+              previewLoading: t.studyMaterials.previewLoading,
+              previewError: t.studyMaterials.previewError,
             }}
           />
         )}
