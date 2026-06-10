@@ -50,7 +50,7 @@ export function AcademicAchievements() {
             const meta = apMeta[index];
             return (
               <motion.div
-                key={item.subject}
+                key={index}
                 className="bg-white rounded-2xl p-6 border border-gray-200/70 shadow-sm hover:shadow-lg transition-shadow duration-300 group flex flex-col h-full"
                 initial={{ opacity: 0, y: 20 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}

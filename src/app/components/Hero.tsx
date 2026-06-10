@@ -51,7 +51,7 @@ function FloatingOrb({
 
 export function Hero() {
   const { t } = useLanguage();
-  const { ref, isVisible, transition } = useInViewOnScrollDown({
+  const { ref, isVisible, transition, shouldAnimate } = useInViewOnScrollDown({
     margin: "-100px",
   });
 
@@ -137,7 +137,7 @@ export function Hero() {
             <motion.span
               key={i}
               className="inline-block"
-              initial={{ opacity: 0, y: 48 }}
+              initial={shouldAnimate ? { opacity: 0, y: 48 } : false}
               animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 48 }}
               transition={transition({ duration: 0.45, delay: 0.3 + i * 0.04 })}
             >
@@ -156,9 +156,9 @@ export function Hero() {
             const Icon = highlightIcons[i];
             return (
               <motion.span
-                key={label}
+                key={i}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-white border border-gray-200 rounded-full text-gray-700 shadow-sm"
-                initial={{ opacity: 0, scale: 0.92 }}
+                initial={shouldAnimate ? { opacity: 0, scale: 0.92 } : false}
                 animate={isVisible ? { opacity: 1, scale: 1 } : {}}
                 transition={transition({ delay: 0.8 + i * 0.06 })}
               >
@@ -202,7 +202,7 @@ export function Hero() {
         >
           {statLabels.map((label, i) => (
             <div
-              key={label}
+              key={i}
               className="px-5 py-4 rounded-2xl bg-white/80 border border-gray-100 backdrop-blur-sm shadow-sm"
             >
               <p className="text-3xl md:text-4xl font-semibold text-gray-900">

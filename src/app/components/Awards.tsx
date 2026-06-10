@@ -134,7 +134,7 @@ export function Awards() {
         <div className="space-y-8">
           {awards.map((award, index) => (
             <motion.div
-              key={award.title}
+              key={index}
               className="relative"
               initial={{ opacity: 0, y: 32 }}
               animate={
@@ -296,7 +296,7 @@ export function Awards() {
                         <div className="mt-6 space-y-4 max-w-2xl">
                           {images.map((image, imageIndex) => (
                             <motion.div
-                              key={image.alt}
+                              key={`${index}-${imageIndex}`}
                               className="rounded-xl overflow-hidden border border-gray-200/80 bg-gray-50 shadow-sm"
                               initial={{ opacity: 0, y: 16 }}
                               animate={

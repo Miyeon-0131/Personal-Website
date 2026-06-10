@@ -105,7 +105,7 @@ export function CodingJourney() {
             const meta = journeyMeta[index];
             return (
               <motion.div
-                key={item.title}
+                key={index}
                 variants={itemVariants}
                 className={`${meta.span} group relative bg-white rounded-2xl p-8 border border-gray-200/70 shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden`}
                 whileHover={{ y: -5 }}

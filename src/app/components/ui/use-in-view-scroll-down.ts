@@ -1,5 +1,6 @@
 import { useInView, type Transition } from "motion/react";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type Options = {
   margin?: string;
@@ -7,6 +8,7 @@ type Options = {
 };
 
 export function useInViewOnScrollDown(options: Options = {}) {
+  const { locale } = useLanguage();
   const ref = useRef<HTMLElement | null>(null);
   const isInView = useInView(ref, {
     once: false,
@@ -50,6 +52,12 @@ export function useInViewOnScrollDown(options: Options = {}) {
     setUseTransition(false);
   }, [isInView]);
 
+  useEffect(() => {
+    if (!revealedRef.current) return;
+    setIsVisible(true);
+    setUseTransition(false);
+  }, [locale]);
+
   const transition = useCallback(
     (base: Transition): Transition => {
       if (useTransition) return base;
@@ -60,5 +68,5 @@ export function useInViewOnScrollDown(options: Options = {}) {
     [useTransition]
   );
 
-  return { ref, isVisible, transition };
+  return { ref, isVisible, transition, shouldAnimate: useTransition };
 }
