@@ -98,10 +98,10 @@ export function Awards() {
     );
 
   return (
-    <section id="awards" className="min-h-screen py-32 px-6 bg-gray-50" ref={ref}>
+    <section id="awards" className="min-h-screen py-32 px-6 bg-white" ref={ref}>
       <div className="max-w-6xl mx-auto">
         <motion.h2
-          className="text-5xl md:text-7xl mb-20"
+          className="text-5xl md:text-7xl mb-20 tracking-tight"
           initial={{ opacity: 0, y: 50 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={transition({ duration: 0.8 })}
@@ -136,56 +136,30 @@ export function Awards() {
             <motion.div
               key={award.title}
               className="relative"
-              initial={{ opacity: 0, x: -100, scale: 0.8 }}
+              initial={{ opacity: 0, y: 32 }}
               animate={
-                isVisible
-                  ? { opacity: 1, x: 0, scale: 1 }
-                  : { opacity: 0, x: -100, scale: 0.8 }
+                isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 32 }
               }
               transition={transition({
-                duration: 0.8,
-                delay: index * 0.15,
-                type: "spring",
-                bounce: 0.3,
+                duration: 0.6,
+                delay: index * 0.1,
               })}
             >
               <motion.div
-                className="bg-white p-8 rounded-2xl hover:shadow-xl transition-all duration-300 border border-gray-100 relative overflow-hidden"
-                whileHover={{ scale: 1.02, y: -5 }}
-                initial={{ rotateY: -15 }}
-                animate={isVisible ? { rotateY: 0 } : { rotateY: -15 }}
-                transition={transition({ duration: 0.6, delay: index * 0.15 + 0.2 })}
+                className="bg-white p-8 rounded-2xl border border-gray-200/70 shadow-sm hover:shadow-lg transition-shadow duration-300 relative overflow-hidden"
+                whileHover={{ y: -4 }}
               >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-50 to-transparent opacity-0"
-                  animate={
-                    isVisible
-                      ? {
-                          opacity: [0, 0.5, 0],
-                          x: ["-100%", "100%"],
-                        }
-                      : {}
-                  }
-                  transition={transition({
-                    duration: 1.5,
-                    delay: index * 0.15 + 0.5,
-                    ease: "easeInOut",
-                  })}
-                />
-
                 <div className="flex items-start gap-6 relative z-10">
                   <motion.div
-                    initial={{ rotate: -180, scale: 0 }}
+                    initial={{ opacity: 0, scale: 0.85 }}
                     animate={
                       isVisible
-                        ? { rotate: 0, scale: 1 }
-                        : { rotate: -180, scale: 0 }
+                        ? { opacity: 1, scale: 1 }
+                        : { opacity: 0, scale: 0.85 }
                     }
                     transition={transition({
-                      duration: 0.6,
-                      delay: index * 0.15 + 0.3,
-                      type: "spring",
-                      bounce: 0.5,
+                      duration: 0.5,
+                      delay: index * 0.1 + 0.2,
                     })}
                   >
                     <motion.div
@@ -275,17 +249,16 @@ export function Awards() {
                         </motion.p>
                       </div>
                       <motion.span
-                        className="text-3xl text-gray-300"
-                        initial={{ opacity: 0, scale: 0 }}
+                        className="shrink-0 px-3 py-1 rounded-full bg-gray-100 border border-gray-200/60 text-sm font-medium text-gray-500"
+                        initial={{ opacity: 0, scale: 0.85 }}
                         animate={
                           isVisible
                             ? { opacity: 1, scale: 1 }
-                            : { opacity: 0, scale: 0 }
+                            : { opacity: 0, scale: 0.85 }
                         }
                         transition={transition({
                           duration: 0.5,
                           delay: index * 0.15 + 0.4,
-                          type: "spring",
                         })}
                       >
                         {award.year}
@@ -320,11 +293,11 @@ export function Awards() {
                       if (images.length === 0) return null;
 
                       return (
-                        <div className="mt-6 space-y-4">
+                        <div className="mt-6 space-y-4 max-w-2xl">
                           {images.map((image, imageIndex) => (
                             <motion.div
                               key={image.alt}
-                              className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50"
+                              className="rounded-xl overflow-hidden border border-gray-200/80 bg-gray-50 shadow-sm"
                               initial={{ opacity: 0, y: 16 }}
                               animate={
                                 isVisible

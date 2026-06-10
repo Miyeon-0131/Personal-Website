@@ -8,18 +8,15 @@ import { useLanguage } from "@/i18n/LanguageContext";
 
 const apMeta = [
   {
-    icon: <BookOpen size={32} />,
-    color: "bg-blue-50 text-blue-600",
+    icon: <BookOpen size={28} />,
     scoreProof: apCsAScore,
   },
   {
-    icon: <Atom size={32} />,
-    color: "bg-purple-50 text-purple-600",
+    icon: <Atom size={28} />,
     scoreProof: apPhysics1Score,
   },
   {
-    icon: <Calculator size={32} />,
-    color: "bg-rose-50 text-rose-600",
+    icon: <Calculator size={28} />,
     scoreProof: apPrecalculusScore,
   },
 ];
@@ -39,10 +36,10 @@ export function AcademicAchievements() {
           transition={transition({ duration: 0.8 })}
           className="mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
             {t.academics.title}
           </h2>
-          <p className="text-xl text-gray-600">{t.academics.subtitle}</p>
+          <p className="text-xl text-gray-500">{t.academics.subtitle}</p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -51,35 +48,31 @@ export function AcademicAchievements() {
             return (
               <motion.div
                 key={item.subject}
-                className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all duration-300 group flex flex-col h-full"
+                className="bg-white rounded-2xl p-6 border border-gray-200/70 shadow-sm hover:shadow-lg transition-shadow duration-300 group flex flex-col h-full"
                 initial={{ opacity: 0, y: 20 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={transition({ duration: 0.5, delay: index * 0.1 })}
                 whileHover={{ y: -5 }}
               >
                 <div className="flex justify-between items-start mb-6">
-                  <div
-                    className={`p-4 rounded-xl ${meta.color} group-hover:scale-110 transition-transform duration-300`}
-                  >
+                  <div className="p-4 rounded-xl bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-white transition-colors duration-300">
                     {meta.icon}
                   </div>
                   <div className="flex flex-col items-end">
-                    <span className="text-4xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      5
-                    </span>
-                    <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    <span className="text-4xl font-bold text-gray-900">5</span>
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider mt-0.5">
                       {t.academics.score}
                     </span>
                   </div>
                 </div>
 
                 <h3 className="text-xl font-semibold mb-1">{item.subject}</h3>
-                <p className="text-sm text-gray-500 mb-3">{item.grade}</p>
-                <p className="text-gray-600 leading-relaxed text-sm mb-5">
+                <p className="text-sm text-gray-400 mb-3">{item.grade}</p>
+                <p className="text-gray-500 leading-relaxed text-sm mb-5">
                   {item.description}
                 </p>
 
-                <div className="mt-auto rounded-xl overflow-hidden border border-gray-200">
+                <div className="mt-auto rounded-xl overflow-hidden border border-gray-200/80 shadow-sm">
                   <img
                     src={meta.scoreProof}
                     alt={item.scoreProofAlt}
