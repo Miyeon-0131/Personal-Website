@@ -4,12 +4,42 @@ import { useInViewOnScrollDown } from "@/app/components/ui/use-in-view-scroll-do
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const journeyMeta = [
-  { icon: <Laptop size={22} />, span: "md:col-span-2" },
-  { icon: <Terminal size={22} />, span: "md:col-span-1" },
-  { icon: <Code2 size={22} />, span: "md:col-span-1" },
-  { icon: <Cpu size={22} />, span: "md:col-span-2" },
-  { icon: <Layout size={22} />, span: "md:col-span-2" },
-  { icon: <Globe size={22} />, span: "md:col-span-1" },
+  {
+    icon: <Laptop size={22} />,
+    bg: "bg-blue-50",
+    text: "text-blue-600",
+    span: "md:col-span-2",
+  },
+  {
+    icon: <Terminal size={22} />,
+    bg: "bg-indigo-50",
+    text: "text-indigo-600",
+    span: "md:col-span-1",
+  },
+  {
+    icon: <Code2 size={22} />,
+    bg: "bg-purple-50",
+    text: "text-purple-600",
+    span: "md:col-span-1",
+  },
+  {
+    icon: <Cpu size={22} />,
+    bg: "bg-pink-50",
+    text: "text-pink-600",
+    span: "md:col-span-2",
+  },
+  {
+    icon: <Layout size={22} />,
+    bg: "bg-rose-50",
+    text: "text-rose-600",
+    span: "md:col-span-2",
+  },
+  {
+    icon: <Globe size={22} />,
+    bg: "bg-orange-50",
+    text: "text-orange-600",
+    span: "md:col-span-1",
+  },
 ];
 
 export function CodingJourney() {
@@ -51,7 +81,7 @@ export function CodingJourney() {
           className="mb-16 text-center"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200/70 shadow-sm mb-6">
-            <Sparkles className="text-gray-500 w-4 h-4" />
+            <Sparkles className="text-amber-500 w-4 h-4" />
             <span className="text-sm font-medium text-gray-600">
               {t.journey.badge}
             </span>
@@ -82,7 +112,9 @@ export function CodingJourney() {
               >
                 <div className="relative z-10 h-full flex flex-col">
                   <div className="flex justify-between items-start mb-8">
-                    <div className="p-3.5 rounded-xl bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-white transition-colors duration-300">
+                    <div
+                      className={`p-3.5 rounded-xl ${meta.bg} ${meta.text} ring-1 ring-inset ring-black/5`}
+                    >
                       {meta.icon}
                     </div>
                     <span className="text-xs font-medium tracking-wider text-gray-500 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200/60 uppercase">

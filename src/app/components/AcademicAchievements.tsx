@@ -9,14 +9,17 @@ import { useLanguage } from "@/i18n/LanguageContext";
 const apMeta = [
   {
     icon: <BookOpen size={28} />,
+    color: "bg-blue-50 text-blue-600",
     scoreProof: apCsAScore,
   },
   {
     icon: <Atom size={28} />,
+    color: "bg-purple-50 text-purple-600",
     scoreProof: apPhysics1Score,
   },
   {
     icon: <Calculator size={28} />,
+    color: "bg-rose-50 text-rose-600",
     scoreProof: apPrecalculusScore,
   },
 ];
@@ -55,11 +58,15 @@ export function AcademicAchievements() {
                 whileHover={{ y: -5 }}
               >
                 <div className="flex justify-between items-start mb-6">
-                  <div className="p-4 rounded-xl bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-white transition-colors duration-300">
+                  <div
+                    className={`p-4 rounded-xl ${meta.color} group-hover:scale-110 transition-transform duration-300`}
+                  >
                     {meta.icon}
                   </div>
                   <div className="flex flex-col items-end">
-                    <span className="text-4xl font-bold text-gray-900">5</span>
+                    <span className="text-4xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      5
+                    </span>
                     <span className="text-xs font-medium text-gray-400 uppercase tracking-wider mt-0.5">
                       {t.academics.score}
                     </span>

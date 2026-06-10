@@ -15,7 +15,17 @@ const projectLinks = [
   "https://echo-chamber-delta.vercel.app/",
 ];
 
-const featuredProjects = new Set([0, 1, 2]);
+const projectStyles = [
+  { bg: "bg-blue-50", text: "text-blue-600", featured: true },
+  { bg: "bg-purple-50", text: "text-purple-600", featured: true },
+  { bg: "bg-emerald-50", text: "text-emerald-600", featured: true },
+  { bg: "bg-rose-50", text: "text-rose-600", featured: false },
+  { bg: "bg-orange-50", text: "text-orange-600", featured: false },
+  { bg: "bg-cyan-50", text: "text-cyan-600", featured: false },
+  { bg: "bg-teal-50", text: "text-teal-600", featured: false },
+  { bg: "bg-violet-50", text: "text-violet-600", featured: false },
+  { bg: "bg-amber-50", text: "text-amber-600", featured: false },
+];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -60,7 +70,7 @@ export function Projects() {
           transition={transition({ duration: 0.8 })}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200/70 shadow-sm mb-6">
-            <FolderGit2 className="text-gray-500 w-4 h-4" />
+            <FolderGit2 className="text-gray-600 w-4 h-4" />
             <span className="text-sm font-medium text-gray-600">
               {t.projects.badge}
             </span>
@@ -82,7 +92,7 @@ export function Projects() {
           transition={transition({ duration: 0.8 })}
         >
           {t.projects.items.map((project, index) => {
-            const featured = featuredProjects.has(index);
+            const style = projectStyles[index];
             return (
               <motion.div
                 key={project.title}
@@ -95,10 +105,12 @@ export function Projects() {
                 >
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="flex justify-between items-start mb-6">
-                      <div className="p-3 rounded-xl bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-white transition-colors duration-300">
+                      <div
+                        className={`p-3 rounded-xl ${style.bg} ${style.text} group-hover:scale-110 transition-transform duration-300`}
+                      >
                         <ExternalLink size={22} />
                       </div>
-                      {featured && (
+                      {style.featured && (
                         <motion.div
                           className="p-2 bg-amber-50 rounded-full border border-amber-100"
                           initial={{ opacity: 0, scale: 0.6 }}
