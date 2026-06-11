@@ -40,20 +40,14 @@ export function Hero() {
       ref={ref}
     >
       {/* background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-violet-50/40" />
+      <div className="absolute inset-0 bg-white" />
       <div
-        className="absolute inset-0 opacity-[0.35]"
+        className="absolute inset-0 opacity-[0.3]"
         style={{
-          backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.045) 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)`,
           backgroundSize: "28px 28px",
         }}
       />
-      {/* color accent blobs — subtle */}
-      <div className="absolute -top-32 left-1/4 w-96 h-96 rounded-full bg-violet-200/25 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-sky-200/20 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/3 -left-20 w-72 h-72 rounded-full bg-emerald-100/30 blur-3xl pointer-events-none" />
-      {/* vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_55%,rgba(255,255,255,0.85)_100%)]" />
 
       {/* top status bar */}
       <motion.div
@@ -105,15 +99,6 @@ export function Hero() {
             </motion.span>
           ))}
         </h1>
-
-        {/* thin divider */}
-        <motion.div
-          className="w-px h-12 bg-gradient-to-b from-gray-300 to-transparent mb-10"
-          initial={{ opacity: 0, scaleY: 0 }}
-          animate={isVisible ? { opacity: 1, scaleY: 1 } : {}}
-          transition={transition({ delay: 0.8, duration: 0.6 })}
-          style={{ transformOrigin: "top" }}
-        />
 
         {/* highlight tags */}
         <motion.div
