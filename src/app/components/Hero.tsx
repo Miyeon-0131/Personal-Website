@@ -40,16 +40,20 @@ export function Hero() {
       ref={ref}
     >
       {/* background */}
-      <div className="absolute inset-0 bg-white" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-violet-50/40" />
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 opacity-[0.35]"
         style={{
-          backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.055) 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.045) 1px, transparent 1px)`,
           backgroundSize: "28px 28px",
         }}
       />
-      {/* subtle vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_60%,rgba(255,255,255,0.95)_100%)]" />
+      {/* color accent blobs — subtle */}
+      <div className="absolute -top-32 left-1/4 w-96 h-96 rounded-full bg-violet-200/25 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-sky-200/20 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/3 -left-20 w-72 h-72 rounded-full bg-emerald-100/30 blur-3xl pointer-events-none" />
+      {/* vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_55%,rgba(255,255,255,0.85)_100%)]" />
 
       {/* top status bar */}
       <motion.div
@@ -118,14 +122,21 @@ export function Hero() {
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={transition({ delay: 0.9, duration: 0.6 })}
         >
-          {t.hero.highlights.map((label, i) => (
-            <span
-              key={i}
-              className="px-4 py-1.5 text-sm text-gray-600 border border-gray-200/80 rounded-full bg-white/70 backdrop-blur-sm"
-            >
-              {label}
-            </span>
-          ))}
+          {t.hero.highlights.map((label, i) => {
+            const colors = [
+              "border-violet-200 bg-violet-50/80 text-violet-700",
+              "border-sky-200 bg-sky-50/80 text-sky-700",
+              "border-emerald-200 bg-emerald-50/80 text-emerald-700",
+            ];
+            return (
+              <span
+                key={i}
+                className={`px-4 py-1.5 text-sm border rounded-full backdrop-blur-sm ${colors[i]}`}
+              >
+                {label}
+              </span>
+            );
+          })}
         </motion.div>
 
         {/* CTA buttons */}
@@ -137,7 +148,7 @@ export function Hero() {
         >
           <motion.a
             href="#projects"
-            className="inline-flex items-center gap-2 px-7 py-3.5 bg-gray-950 text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors shadow-md shadow-black/10"
+            className="inline-flex items-center gap-2 px-7 py-3.5 bg-gray-950 text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/15"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >

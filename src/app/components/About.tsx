@@ -11,7 +11,7 @@ export function About() {
   });
 
   return (
-    <section id="about" className="min-h-screen py-32 px-6 bg-white" ref={ref}>
+    <section id="about" className="min-h-screen py-32 px-6 bg-gradient-to-b from-white via-slate-50/60 to-white" ref={ref}>
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
@@ -54,7 +54,7 @@ export function About() {
                   <motion.img
                     src={profileImage}
                     alt={t.about.profileAlt}
-                    className="w-48 h-48 rounded-full object-cover border-4 border-gray-200 shadow-lg"
+                    className="w-48 h-48 rounded-full object-cover border-4 border-white shadow-xl shadow-violet-100/60"
                     whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.3 }}
                   />
@@ -73,7 +73,7 @@ export function About() {
                 </h3>
 
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-violet-50 text-violet-600 rounded-lg">
                   <Mail size={24} />
                 </div>
                 <div>
@@ -83,7 +83,7 @@ export function About() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-sky-50 text-sky-600 rounded-lg">
                   <MapPin size={24} />
                 </div>
                 <div>
@@ -93,7 +93,7 @@ export function About() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
                   <Briefcase size={24} />
                 </div>
                 <div>
@@ -103,7 +103,7 @@ export function About() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-rose-50 text-rose-600 rounded-lg">
                   <Music size={24} />
                 </div>
                 <div>
